@@ -2463,11 +2463,11 @@ enviarASheets(caso);
       
         // FUNCIONES DE BÚSQUEDA DE HISTORIAL
 
-        function buscarHistorial() {
+       function buscarHistorial() {
             const dni = document.getElementById('searchDNI').value.trim();
             const nombre = document.getElementById('searchNombre').value.trim();
             const estado = document.getElementById('filterEstado').value;
-            const H = document.getElementById('filterFecha').value;
+            const fechaFiltro = document.getElementById('filterFecha').value;
             const operador = document.getElementById('filterOperador').value;
 
             if (!dni && !nombre) {
@@ -2483,7 +2483,7 @@ enviarASheets(caso);
                 if (nombre && !caso.nombreApellido.toLowerCase().includes(nombre.toLowerCase())) cumple = false;
                 if (estado && caso.estado !== estado) cumple = false;
                 if (operador && caso.operador !== operador) cumple = false;
-                if (fecha && new Date(caso.fecha).toDateString() < new Date(fecha).toDateString()) cumple = false;
+                if (fechaFiltro && new Date(caso.fecha).toDateString() < new Date(fechaFiltro).toDateString()) cumple = false;
                 
                 return cumple;
             });

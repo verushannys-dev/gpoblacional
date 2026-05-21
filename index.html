@@ -2523,7 +2523,7 @@ enviarASheets(caso);
                             <p><strong>Motivo:</strong> ${caso.motivoDemanda}</p>
                             <p><strong>Modalidad:</strong> ${caso.modalidad} | <strong>Tramita:</strong> ${caso.quienTramita}</p>
                             ${caso.tiempoAtencion ? `<p><strong>Tiempo:</strong> ${caso.tiempoAtencion}</p>` : ''}
-                            ${caso.derivado && caso.derivado.length > 0 ? `<p><strong>Derivado a:</strong> ${caso.derivado.join(', ')}</p>` : ''}
+                            ${caso.derivado && caso.derivado.length > 0 ? `<p><strong>Derivado a:</strong> ${Array.isArray(caso.derivado) ? caso.derivado.join(', ') : caso.derivado}</p>` : ''}
                             ${caso.observaciones ? `<p><strong>Observaciones:</strong> ${caso.observaciones}</p>` : ''}
                         </div>
                         <div class="case-actions">

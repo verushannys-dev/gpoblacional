@@ -1754,13 +1754,13 @@
         let nivelTriageSeleccionado = '';
         
         // Inicialización
-        document.addEventListener('DOMContentLoaded', async function() {
+    document.addEventListener('DOMContentLoaded', async function() {
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
     seleccionarSLA('verde');
     
-    // Esperar a que carguen los datos ANTES de actualizar métricas
-    await cargarDatos();
+    // Cargar operadores y datos en paralelo
+    await Promise.all([cargarOperadores(), cargarDatos()]);
 });
 
         // Función para mostrar/ocultar tabs
@@ -1784,11 +1784,54 @@
                 actualizarCasosPendientes();
             }
         }
-
+// Cargar operadores dinámicamente desde Sheets
+async function cargarOperadores() {
+  try {
+    const respuesta = await fetch(APPS_SCRIPT_URL + '?tipo=usuarios');
+    const usuarios = await respuesta.json();
+    
+    // Filtrar solo usuarios activos
+    const operadoresActivos = usuarios.filter(u => u.activo === true);
+    
+    // IDs de todos los select de operadores en el HTML
+    const selectIds = [
+      'operador',
+      'filterOperador', 
+      'filterOperadorPendiente',
+      'operadorDestino'
+    ];
+    
+    selectIds.forEach(id => {
+      const select = document.getElementById(id);
+      if (!select) return;
+      
+      // Guardar primera opción (el placeholder)
+      const primeraOpcion = select.options[0];
+      
+      // Limpiar opciones actuales
+      select.innerHTML = '';
+      
+      // Restaurar placeholder
+      select.appendChild(primeraOpcion);
+      
+      // Agregar operadores desde Sheets
+      operadoresActivos.forEach(usuario => {
+        const opcion = document.createElement('option');
+        opcion.value = usuario.nombreCompleto;
+        opcion.textContent = usuario.nombreCompleto;
+        select.appendChild(opcion);
+      });
+    });
+    
+    console.log('✅ Operadores cargados:', operadoresActivos.length);
+  } catch (error) {
+    console.error('❌ Error al cargar operadores:', error);
+  }
+}
         // Cargar datos del localStorage
         // Cargar datos desde Google Sheets
-async function cargarDatos() {
-    try {
+        async function cargarDatos() {
+        try {
         // Mostrar indicador de carga
         document.getElementById('ultimaActualizacion').textContent = 'Cargando...';
         

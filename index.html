@@ -1974,50 +1974,58 @@ async function cargarOperadores() {
         }
 
         // Función principal: actualizar gráfico con barras 3D
-        function actualizarGraficoMotivosDemanda() {
-            // 1. FILTRAR CASOS SEGÚN PERÍODO
-            let casosFiltrados = casos;
-            const hoy = new Date();
-            hoy.setHours(0, 0, 0, 0);
-            
-            switch(periodoActual) {
-                case 'hoy':
-                    casosFiltrados = casos.filter(caso => {
-                        const fechaCaso = new Date(caso.fecha);
-                        fechaCaso.setHours(0, 0, 0, 0);
-                        return fechaCaso.getTime() === hoy.getTime();
-                    });
-                    break;
-                    
-                case 'semana':
-                    const hace7dias = new Date();
-                    hace7dias.setDate(hace7dias.getDate() - 7);
-                    hace7dias.setHours(0, 0, 0, 0);
-                    casosFiltrados = casos.filter(caso => {
-                        const fechaCaso = new Date(caso.fecha);
-                        return fechaCaso >= hace7dias;
-                    });
-                    break;
-                    
-                case 'mes':
-                    const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-                    casosFiltrados = casos.filter(caso => {
-                        const fechaCaso = new Date(caso.fecha);
-                        return fechaCaso >= primerDiaMes;
-                    });
-                    break;
-                    
-                case 'rango':
-                    const desde = new Date(fechaDesdeGlobal);
-                    desde.setHours(0, 0, 0, 0);
-                    const hasta = new Date(fechaHastaGlobal);
-                    hasta.setHours(23, 59, 59, 999);
-                    casosFiltrados = casos.filter(caso => {
-                        const fechaCaso = new Date(caso.fecha);
-                        return fechaCaso >= desde && fechaCaso <= hasta;
-                    });
-                    break;
-            }
+function actualizarGraficoMotivosDemanda() {
+    // Helper para obtener fecha en zona horaria Argentina
+    function fechaArgentina(fecha) {
+        return new Date(new Date(fecha).toLocaleString('es-AR', {
+            timeZone: 'America/Argentina/Buenos_Aires'
+        }));
+    }
+
+    // 1. FILTRAR CASOS SEGÚN PERÍODO
+    let casosFiltrados = casos;
+    const ahora = new Date();
+    const hoyAR = fechaArgentina(ahora);
+    hoyAR.setHours(0, 0, 0, 0);
+
+    switch(periodoActual) {
+        case 'hoy':
+            casosFiltrados = casos.filter(caso => {
+                const fechaCaso = fechaArgentina(caso.fecha);
+                fechaCaso.setHours(0, 0, 0, 0);
+                return fechaCaso.getTime() === hoyAR.getTime();
+            });
+            break;
+
+        case 'semana':
+            const hace7dias = fechaArgentina(ahora);
+            hace7dias.setDate(hace7dias.getDate() - 7);
+            hace7dias.setHours(0, 0, 0, 0);
+            casosFiltrados = casos.filter(caso => {
+                const fechaCaso = fechaArgentina(caso.fecha);
+                return fechaCaso >= hace7dias;
+            });
+            break;
+
+        case 'mes':
+            const primerDiaMes = new Date(hoyAR.getFullYear(), hoyAR.getMonth(), 1);
+            casosFiltrados = casos.filter(caso => {
+                const fechaCaso = fechaArgentina(caso.fecha);
+                return fechaCaso >= primerDiaMes;
+            });
+            break;
+
+        case 'rango':
+            const desde = fechaArgentina(fechaDesdeGlobal);
+            desde.setHours(0, 0, 0, 0);
+            const hasta = fechaArgentina(fechaHastaGlobal);
+            hasta.setHours(23, 59, 59, 999);
+            casosFiltrados = casos.filter(caso => {
+                const fechaCaso = fechaArgentina(caso.fecha);
+                return fechaCaso >= desde && fechaCaso <= hasta;
+            });
+            break;
+    }
             
             // 2. CONTAR MOTIVOS DE DEMANDA (NO DERIVACIÓN)
             const motivosDemanda = {};
@@ -2293,21 +2301,24 @@ async function enviarASheets(caso) {
                 operadorDerivado.style.display = this.value === 'Si' ? 'block' : 'none';
             });
         });
-        function calcularFechaVencimiento(nivel) {
-        const diasMap = { verde: 15, amarillo: 10, rojo: 2 };
-        const dias = diasMap[nivel] || 15;
-        let fecha = new Date();
-        let diasHabilesContados = 0;
-         while (diasHabilesContados < dias) {
+       function calcularFechaVencimiento(nivel) {
+    const diasMap = { verde: 15, amarillo: 10, rojo: 2 };
+    const dias = diasMap[nivel] || 15;
+    let fecha = new Date();
+    let diasHabilesContados = 0;
+    while (diasHabilesContados < dias) {
         fecha.setDate(fecha.getDate() + 1);
         const diaSemana = fecha.getDay();
-        if (diaSemana !== 0 && diaSemana !== 6) { // excluye sábado y domingo
+        if (diaSemana !== 0 && diaSemana !== 6) {
             diasHabilesContados++;
         }
     }
-    return fecha.toISOString();
+    // Devolver fecha legible en formato argentino
+    return fecha.toLocaleDateString('es-AR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        timeZone: 'America/Argentina/Buenos_Aires'
+    });
 }
-
         // Envío del formulario
         document.getElementById('gestionForm').addEventListener('submit', function(e) {
             e.preventDefault();

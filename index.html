@@ -2479,7 +2479,7 @@ enviarASheets(caso);
             let resultados = casos.filter(caso => {
                 let cumple = true;
                 
-                if (dni && caso.dni !== dni)  cumple = false;
+                if (dni && String(caso.dni) !== String(dni))  cumple = false;
                 if (nombre && !caso.nombreApellido.toLowerCase().includes(nombre.toLowerCase())) cumple = false;
                 if (estado && caso.estado !== estado) cumple = false;
                 if (operador && caso.operador !== operador) cumple = false;

@@ -2136,11 +2136,6 @@ async function cargarDatos() {
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxinB1WpFrwDtPuX4Kd8IDRvMGLS9_ZTJkHdEIKKZh4L6kuk8ocGdNGd0da6ZkFUSY/exec';
 const CLIENT_ID = '364574222220-7mhiu32flta25882kdiutc1dtlkj5mph.apps.googleusercontent.com';
 
-const EMAILS_AUTORIZADOS = [
-  'veronica.mlinarevic@gmail.com',
-  'verushannys.ventus@gmail.com'
-  // Agregá aquí todos los emails del equipo
-];
 
 let emailUsuarioActual = null;
 let nombreUsuarioActual = null;
@@ -2161,22 +2156,56 @@ window.onload = function() {
   google.accounts.id.prompt();
 };
 
-function manejarCredencial(response) {
+let rolUsuarioActual = null;
+
+async function manejarCredencial(response) {
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
   const email = payload.email;
-  const nombre = payload.name;
 
-  if (EMAILS_AUTORIZADOS.includes(email)) {
-    emailUsuarioActual = email;
-    nombreUsuarioActual = nombre;
-    document.getElementById('panelLogin').style.display = 'none';
-    console.log('✅ Acceso concedido:', email);
-  } else {
+  try {
+    const respuesta = await fetch(APPS_SCRIPT_URL + '?tipo=usuarios');
+    const usuarios = await respuesta.json();
+    
+    const usuario = usuarios.find(u => u.email === email && u.activo === true);
+    
+    // Verificar rol temporal
+    if (usuario && usuario.rolTemporal && usuario.rolTemporalHasta) {
+      const hoy = new Date();
+      const hasta = new Date(usuario.rolTemporalHasta);
+      if (hoy <= hasta) {
+        usuario.rol = usuario.rolTemporal;
+      }
+    }
+
+    if (usuario) {
+      emailUsuarioActual = email;
+      nombreUsuarioActual = usuario.nombreCompleto;
+      rolUsuarioActual = usuario.rol;
+      document.getElementById('panelLogin').style.display = 'none';
+      console.log('✅ Acceso concedido:', email, '| Rol:', rolUsuarioActual);
+      
+      // Autocompletar operador en el formulario
+      const selectOperador = document.getElementById('operador');
+      if (selectOperador) {
+        // Buscar la opción que coincide con el nombre
+        for (let i = 0; i < selectOperador.options.length; i++) {
+          if (selectOperador.options[i].value === nombreUsuarioActual) {
+            selectOperador.selectedIndex = i;
+            break;
+          }
+        }
+        selectOperador.disabled = true;
+      }
+
+    } else {
+      document.getElementById('mensajeLoginError').style.display = 'block';
+      console.warn('❌ Email no autorizado:', email);
+    }
+  } catch (error) {
+    console.error('Error al verificar usuario:', error);
     document.getElementById('mensajeLoginError').style.display = 'block';
-    console.warn('❌ Email no autorizado:', email);
   }
 }
-
 async function enviarASheets(caso) {
   try {
     const respuesta = await fetch(APPS_SCRIPT_URL, {

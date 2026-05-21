@@ -2237,7 +2237,9 @@ async function manejarCredencial(response) {
             break;
           }
         }
-        selectOperador.disabled = true;
+        selectOperador.setAttribute('readonly', true);
+        selectOperador.style.pointerEvents = 'none';
+        selectOperador.style.backgroundColor = '#f0f0f0';
       }
 
     } else {

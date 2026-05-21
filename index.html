@@ -1,0 +1,2775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión Poblacional</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(90deg, #f1f0f0 0%, #b4b2b2 100%);
+            min-height: 100vh;
+            color: #2b012b;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(84, 83, 84, 0.3);
+            border: 1px solid rgba(41, 41, 41, 0.2);
+        }
+        
+        .main-title {
+            color: #590159;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #101010;
+            font-size: 1.2rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(75, 75, 75, 0.2);
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #787876;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #2b012b, #590159);
+            color: white;
+            box-shadow: 0 4px 15px rgba(101, 101, 101, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .alert-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(128, 0, 128, 0.2);
+            border: 1px solid rgba(128, 0, 128, 0.1);
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #2b012b;
+        }
+
+        .alert-title {
+            color: #510851;
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.95rem;
+        }
+
+        .stat-badge {
+            background: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .stat-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .stat-badge.danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert-sections {
+            display: grid;
+            gap: 20px;
+        }
+
+        .alert-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .alert-section-title {
+            color: #555;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .case-item {
+            background: white;
+            border-left: 4px solid #6c757d;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .case-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .case-item.cola-general {
+            background: linear-gradient(90deg, #fff3cd 0%, #ffffff 100%);
+            border-left: 5px solid #ffc107;
+            box-shadow: 0 2px 10px rgba(255, 193, 7, 0.3);
+        }
+
+        .case-item.sobrecarga {
+            background: linear-gradient(90deg, #f8d7da 0%, #ffffff 100%);
+            border-left: 5px solid #dc3545;
+            box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3); }
+            50% { box-shadow: 0 4px 20px rgba(220, 53, 69, 0.5); }
+        }
+
+        .case-header-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .case-operator {
+            font-weight: 700;
+            color: #510851;
+            font-size: 1.1rem;
+        }
+
+        .case-time {
+            background: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .case-time.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .case-time.danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .case-details {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .case-count {
+            display: inline-block;
+            background: #2b012b;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .case-alert-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge-cola {
+            background: #ffc107;
+            color: #856404;
+        }
+
+        .badge-sobrecarga {
+            background: #dc3545;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        /* Estilos para el panel de estadísticas */
+        .stats-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #510851;
+            box-shadow: 0 2px 8px #510851);
+            transition: transform 0.2s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(166, 159, 165, 0.1);
+        }
+
+        .stat-box-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #510851;
+            margin-bottom: 5px;
+        }
+
+        .stat-box-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            background: rgb(246, 241, 241);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-top: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #b20c0c;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-canvas {
+            max-height: 300px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+
+        .legend-text {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #181717;
+        }
+
+        .legend-value {
+            font-weight: 700;
+            color: #474a47;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+        }
+
+        .search-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        /* ========================================
+           ESTILOS DEL TRIAGE - BOTONES 3D
+        ======================================== */
+
+        .sla-triage-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding: 18px 22px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .triage-compact-label {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #5a055a;
+            min-width: 140px;
+            white-space: nowrap;
+        }
+
+        .sla-circles-wrapper {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex: 1;
+        }
+
+        /* ── BASE del botón 3D ── */
+        .sla-circle {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 10px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+            text-align: center;
+            user-select: none;
+        }
+
+        /* ── TEXTOS dentro del botón ── */
+        .sla-btn-nivel {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .sla-btn-dias {
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .sla-btn-label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-top: 3px;
+            letter-spacing: 0.04em;
+        }
+
+        /* ── ESTADO INACTIVO: hundido, tono tenue, texto legible ── */
+        .sla-circle.inactive {
+            opacity: 1;
+            transform: translateY(3px);
+        }
+
+        .sla-verde-compact.inactive {
+            background: linear-gradient(180deg, #e9fef2 0%, #c7fad7 100%);
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.18), inset 0 1px 3px rgba(0,0,0,0.12);
+            color: #3a7a52;
+        }
+
+        .sla-amarillo-compact.inactive {
+            background: linear-gradient(180deg, #fcf3cc 0%, #f7e3a4 100%);
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.18), inset 0 1px 3px rgba(0,0,0,0.12);
+            color: #8a6800;
+        }
+
+        .sla-rojo-compact.inactive {
+            background: linear-gradient(180deg, #f9dede 0%, #fbb8b8 100%);
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.18), inset 0 1px 3px rgba(0,0,0,0.12);
+            color: #8b2020;
+        }
+
+        /* ── ESTADO ACTIVO: elevado, color vibrante, sombra gris suave ── */
+        .sla-circle.active {
+            transform: translateY(-5px);
+        }
+
+        .sla-verde-compact.active {
+            background: linear-gradient(180deg, #2ecc71 0%, #158543 100%);
+            box-shadow: 0 10px 16px rgba(100,100,100,0.35), 0 3px 6px rgba(0,0,0,0.2);
+            color: #ffffff;
+        }
+
+        .sla-amarillo-compact.active {
+            background: linear-gradient(180deg, #f7ca18 0%, #c89a00 100%);
+            box-shadow: 0 10px 16px rgba(100,100,100,0.35), 0 3px 6px rgba(0,0,0,0.2);
+            color: #ffffff;
+        }
+
+        .sla-rojo-compact.active {
+            background: linear-gradient(180deg, #e74c3c 0%, #a93226 100%);
+            box-shadow: 0 10px 16px rgba(100,100,100,0.35), 0 3px 6px rgba(0,0,0,0.2);
+            color: #ffffff;
+            animation: pulseRed 2s infinite;
+        }
+
+        /* Texto más grande en activo */
+        .sla-circle.active .sla-btn-nivel {
+            font-size: 1.2rem;
+        }
+        .sla-circle.active .sla-btn-dias {
+            font-size: 0.9rem;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        }
+        .sla-circle.active .sla-btn-label {
+            font-size: 0.9rem;
+        }
+
+        /* ── HOVER sobre inactivo: sube levemente ── */
+        .sla-circle.inactive:hover {
+            transform: translateY(0px);
+            filter: brightness(1.05);
+        }
+
+        .triage-select-wrapper {
+            position: relative;
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .triage-select-compact {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid #bdc3c7;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2c3e50;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        .triage-select-compact:focus {
+            outline: none;
+            border-color: #5a055a;
+            box-shadow: 0 0 0 3px rgba(90, 5, 90, 0.1);
+        }
+
+        .triage-select-compact:disabled {
+            background-color: #ecf0f1;
+            cursor: not-allowed;
+            color: #95a5a6;
+        }
+
+        /* Flecha personalizada para el select */
+        .triage-select-wrapper::after {
+            content: "▼";
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #7f8c8d;
+            font-size: 0.8rem;
+        }
+
+       
+        
+
+        @keyframes slideDownSmall {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Tooltip con el nombre del nivel al hacer hover */
+        .triage-circle-compact::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .triage-circle-compact:hover::before {
+            opacity: 1;
+        }
+/* ========================================
+           NUEVOS ESTILOS PARA SLA
+        ======================================== */
+        
+        /* Sección de labels del SLA */
+        .sla-label-section {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 180px;
+        }
+        
+        .sla-main-label {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #5a055a;
+        }
+        
+        .sla-help-text {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        /* Icono numérico dentro del círculo */
+        .sla-circle-icon {
+            font-size: 1.5rem;
+            color: white;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+        
+        /* Panel de información del SLA */
+        .sla-info-panel {
+            display: none;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .sla-info-panel.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .sla-info-box {
+            background: linear-gradient(135deg, #ecf0f1 0%, #ffffff 100%);
+            border-radius: 10px;
+            padding: 15px 20px;
+            border-left: 5px solid #95a5a6;
+        }
+        
+        .sla-info-box.verde-info {
+            border-left-color: #27ae60;
+            background: linear-gradient(135deg, #d4edda 0%, #ecf8f0 100%);
+        }
+        
+        .sla-info-box.naranja-info {
+            border-left-color: #e67e22;
+            background: linear-gradient(135deg, #ffe5d0 0%, #fff4ed 100%);
+        }
+        
+        .sla-info-box.rojo-info {
+            border-left-color: #e74c3c;
+            background: linear-gradient(135deg, #ffd4d0 0%, #fff0ef 100%);
+        }
+        
+        .sla-info-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        
+        .sla-info-details {
+            font-size: 0.85rem;
+            color: #34495e;
+            line-height: 1.6;
+        }
+        
+        .sla-info-details strong {
+            color: #2c3e50;
+        }
+        
+        /* Animación especial para rojo cuando está activo */
+        .sla-circle.active.sla-rojo {
+            animation: pulseRed 2s infinite;
+        }
+        
+        @keyframes pulseRed {
+            0%, 100% { 
+                box-shadow: 0 4px 12px rgba(231, 76, 60, 0.6);
+            }
+            50% { 
+                box-shadow: 0 6px 20px rgba(231, 76, 60, 0.9);
+            }
+        }
+        .form-section, .stats-section, .search-box, .pending-cases {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(233, 236, 233, 0.2);
+            border: 1px solid rgba(119, 9, 119, 0.1);
+        }
+        
+        .section-title {
+            color: #3c013c;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            border-bottom: 3px solid #2b012b;
+            padding-bottom: 10px;
+        }
+        
+        .form-section-header {
+            color: #5a055a;
+            font-size: 1.4rem;
+            margin: 25px 0 15px 0;
+            font-weight: 600;
+            border-bottom: 2px solid #3d023d;
+            padding-bottom: 8px;
+        }
+        
+        .form-section-header:first-of-type {
+            margin-top: 0;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        /* Estilo especial SOLO para labels principales de campos (sin atributo "for") */
+        /* Estos son los labels tipo: "Modalidad de Asistencia:", "¿Quién tramita?", etc. */
+        .form-group > label:not([for]) {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            margin-left: 30px; /* Doble sangría */
+            font-weight: 700; /* Negrilla */
+            color: #5a055a; /* Mismo color que H3 */
+            line-height: 1.6;
+        }
+
+        .form-group > label:not([for])::before {
+            content: "▪"; /* Viñeta */
+            color: #5a055a;
+            font-size: 1.2rem;
+            margin-right: 10px;
+            margin-left: -20px; /* Para compensar la sangría */
+        }
+        
+        /* Los labels CON atributo "for" mantienen su estilo normal */
+        /* Estos son: "Presencial", "Remota", "Afiliado", etc. */
+        label[for] {
+            display: inline-block;
+        }
+        
+        label[for]::before {
+            content: none;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #f09c64;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3d013d;
+            box-shadow: 0 0 0 3px rgba(80, 2, 84, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .char-counter {
+            font-size: 0.9rem;
+            color: #858784;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .radio-item input[type="radio"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #2b012b, #a020f0);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(128, 0, 128, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(128, 0, 128, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            margin: 2px;
+        }
+        
+        .progress-bar {
+            background: #0473e2;
+            border-radius: 10px;
+            height: 20px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2b012b, #a020f0);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .team-performance {
+            margin-top: 20px;
+        }
+        
+        .operator-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(128, 0, 128, 0.1);
+            border-radius: 8px;
+        }
+        
+        .status-badges {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .badge-pendiente {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-proceso {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .badge-cerrado {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .datetime-now {
+            background: rgba(144, 141, 144, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #4e024e;
+        }
+
+        .search-results {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .case-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #c8c8bd;
+        }
+
+        .case-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .case-date {
+            font-weight: bold;
+            color: #2b012b;
+        }
+
+        .case-status {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        .case-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .pending-case {
+            border-left: 4px solid #856404;
+            padding: 15px;
+            margin: 10px 0;
+            background: #fff3cd;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .pending-case.proceso {
+            border-left-color: #0c5460;
+            background: #d1ecf1;
+        }
+
+        .case-info {
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+
+        .case-actions {
+            margin-top: 10px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
+/* Estilos para botones de filtro de período */
+.btn-filter {
+    padding: 8px 16px;
+    border: 2px solid #ddd;
+    background: white;
+    color: #555;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-filter:hover {
+    background: #f8f9fa;
+    border-color: #2b012b;
+}
+
+.btn-filter.active {
+    background: linear-gradient(135deg, #2b012b, #590159);
+    color: white;
+    border-color: #2b012b;
+    box-shadow: 0 2px 8px rgba(43, 1, 43, 0.3);
+}
+
+/* Efecto 3D adicional para el contenedor del gráfico */
+#motivosDemandaChart {
+    filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.2));
+}
+        .filter-group select {
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content, .search-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-title {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+
+            .nav-tab {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="panelLogin" style="
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(43,1,43,0.97); display: flex; align-items: center;
+  justify-content: center; z-index: 9999; flex-direction: column; gap: 20px;">
+  <h2 style="color: white; font-size: 1.8rem;">Sistema de Gestión Poblacional</h2>
+  <p style="color: #ddd;">Iniciá sesión con tu cuenta institucional de Gmail</p>
+  <div id="botonGoogle"></div>
+  <p id="mensajeLoginError" style="color: #ff8888; display:none;">
+    ⚠️ Tu cuenta no está autorizada para acceder al sistema.
+  </p>
+</div>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="main-title"> Trazabilidad de Gestión Poblacional </h1>
+            <p class="subtitle">Registro y Seguimiento de Demanda de Atención</p>
+        </div>
+        
+        <!-- Navegación por pestañas -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="mostrarTab('registro')"> Nuevo Registro</div>
+            <div class="nav-tab" onclick="mostrarTab('busqueda')"> Búsqueda de Historial</div>
+            <div class="nav-tab" onclick="mostrarTab('pendientes')"> Demandas Pendientes</div>
+        </div>
+
+        <!-- Panel de Estadísticas en Tiempo Real -->
+        <div class="metrics-grid">
+            <div class="alert-panel">
+                <div class="alert-header">
+                    <h2 class="alert-title">
+                         Estadísticas en Tiempo Real
+                    </h2>
+                    <div class="alert-stats">
+                        <div class="stat-badge">
+                            Última actualización: <strong id="ultimaActualizacion">--:--</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen de Casos Pendientes -->
+                <div class="stats-summary-grid">
+                    <div class="stat-box">
+                        <div class="stat-box-number" id="totalPendientes">0</div>
+                        <div class="stat-box-label">Total Pendientes</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-number" id="totalEnProceso">0</div>
+                        <div class="stat-box-label">En Proceso</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-number" id="totalDerivados">0</div>
+                        <div class="stat-box-label">Derivados Internos</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-number" id="totalColaGeneral">0</div>
+                        <div class="stat-box-label">En Cola General</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-number" id="promedioDias">0</div>
+                        <div class="stat-box-label">Promedio Días Pendiente</div>
+                    </div>
+                </div>
+               
+            </div>
+        </div>
+
+        <!-- Tab: Registro de Demandas -->
+        <div id="tab-registro" class="tab-content active">
+            <div class="main-content">
+                <!-- Formulario de Carga -->
+                <div class="form-section">
+                    <h2 class="section-title">Registro de la Demanda</h2>
+                    
+                    <div class="datetime-now" id="fechaHora">
+                        <!-- Se actualiza con JavaScript -->
+                    </div>
+                   
+                    <form id="gestionForm">
+                        <!-- Datos del Operador -->
+                        <h3 class="form-section-header">Datos del Operador</h3>
+                        <div class="form-group">
+                            <label for="operador">Operador que carga:</label>
+                            <select id="operador" name="operador" required>
+                                <option value="">Seleccionar operador</option>
+                                <option value="Maria Salas Marin">Maria Salas Marin</option>
+                                <option value="Elisabeth Galvani">Elisabeth Galvani</option>
+                                <option value="Laura Osorio">Laura Osorio</option>
+                                <option value="Paula Aguero">Paula Aguero</option>
+                                <option value="Marcela Mendez">Marcela Mendez</option>
+                                <option value="Cecilia Molina">Cecilia Molina</option>
+                                <option value="Cecilia Silva">Cecilia Silva</option>
+                                <option value="Jimena Del Barrio">Jimena Del Barrio</option>
+                                <option value="Carla Grinberg">Carla Grinberg</option>
+                                <option value="Virginia Cechinni">Virginia Cechinni</option>
+                                <option value="Fabiana Decima">Fabiana Decima</option>
+                                <option value="Fernanda Suarez">Fernanda Suarez</option>
+                                <option value="Paola Yañez">Paola Yañez</option>
+                                <option value="Dina Gregorat">Dina Gregorat</option>
+                            </select>
+                        </div>
+
+                        <!-- Datos del Afiliado -->
+                        <h3 class="form-section-header">Datos del Afiliado</h3>
+
+                                            
+                    <!-- ========================================
+                         SISTEMA DE TRIAGE COMPACTO
+                    ======================================== -->
+                    <div class="sla-triage-container">
+                        <div class="triage-compact-label"> Seleccione Nivel de Urgencia asigando al caso </div>
+                              
+                        <div class="sla-circles-wrapper">
+
+                            <div class="sla-circle sla-verde-compact active"
+                                 id="sla-verde"
+                                 data-sla-days="15"
+                                 onclick="seleccionarSLA('verde')"
+                                 title="SLA: 15 días hábiles">
+                                <span class="sla-btn-nivel">BAJA</span>
+                                <span class="sla-btn-dias">15</span>
+                                <span class="sla-btn-label">días hábiles</span>
+                            </div>
+
+                            <div class="sla-circle sla-amarillo-compact inactive"
+                                 id="sla-amarillo"
+                                 data-sla-days="10"
+                                 onclick="seleccionarSLA('amarillo')"
+                                 title="SLA: 10 días hábiles">
+                                <span class="sla-btn-nivel">MEDIA</span>
+                                <span class="sla-btn-dias">10</span>
+                                <span class="sla-btn-label">días hábiles</span>
+                            </div>
+
+                            <div class="sla-circle sla-rojo-compact inactive"
+                                 id="sla-rojo"
+                                 data-sla-days="2"
+                                 onclick="seleccionarSLA('rojo')"
+                                 title="SLA: 2 días hábiles">
+                                <span class="sla-btn-nivel">ALTA</span>
+                                <span class="sla-btn-dias">2</span>
+                                <span class="sla-btn-label">días hábiles</span>
+                            </div>
+
+                        </div>
+                        
+                        
+                    </div>
+                    <input type="hidden" id="nivelTriageInput" name="nivelTriage" value="verde">      
+  
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="dni">DNI:</label>
+                                <input type="text" id="dni" name="dni" placeholder="Ingrese DNI" required>
+                            </div>
+
+                             <div class="form-group">
+                                <label for="nroAfi">Número de Afiliado:</label>
+                                <input type="text" id="nroAfi" name="nroAfi" placeholder="Formato ********/**" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="nombreApellido">Apellido y Nombre:</label>
+                                <input type="text" id="nombreApellido" name="nombreApellido" placeholder="Apellido, Nombre" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edad">Edad:</label>
+                                <input type="number" id="edad" name="edad" placeholder="Edad" min="0" max="120">
+                            </div>
+                        </div>
+                        
+                        <!-- Datos de la Atención -->
+                        <h3 class="form-section-header">Datos de la Atención</h3>
+                    
+                        <div class="form-group">
+                            <label>Modalidad de Asistencia:</label>
+                            <div class="radio-group">
+                                <div class="radio-item">
+                                    <input type="radio" id="presencial" name="modalidad" value="Presencial" required>
+                                    <label for="presencial">Presencial</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" id="remota" name="modalidad" value="Remota">
+                                    <label for="remota">Remota</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>¿Quién tramita?</label>
+                            <div class="radio-group">
+                                <div class="radio-item">
+                                    <input type="radio" id="afiliado" name="quienTramita" value="Afiliado" required>
+                                    <label for="afiliado">Afiliado</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" id="referente" name="quienTramita" value="Referente">
+                                    <label for="referente">Referente</label>
+                                </div>
+                                <!-- Campos adicionales visibles solo si se elige "Referente" -->
+<div id="datosReferente" class="form-grid" style="display:none; margin-top:15px;">
+    <div class="form-group">
+        <label for="vinculoReferente">Vínculo con el afiliado:</label>
+        <input type="text" id="vinculoReferente" name="vinculoReferente" placeholder="Ej: hijo/a, tutor, cónyuge...">
+    </div>
+    <div class="form-group">
+        <label for="nombreReferente">Apellido y Nombre del referente:</label>
+        <input type="text" id="nombreReferente" name="nombreReferente" placeholder="Apellido, Nombre">
+    </div>
+    <div class="form-group">
+        <label for="telefonoReferente">Teléfono de contacto:</label>
+        <input type="tel" id="telefonoReferente" name="telefonoReferente" placeholder="Ej: 261-5555555">
+    </div>
+    <div class="form-group">
+        <label for="emailReferente">Correo electrónico:</label>
+        <input type="email" id="emailReferente" name="emailReferente" placeholder="ejemplo@mail.com">
+    </div>
+</div>
+
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                          <label>  Derivado a: </label>
+                              
+                               <div class="checkbox-group">
+                                  <div class="checkbox-item">
+                                    <input type="checkbox" id="noDerivado" name="derivado" value="No">
+                                    <label for="noDerivado">No</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="informes" name="derivado" value="Informes/Ventanilla única">
+                                    <label for="informes">Informes/Ventanilla única</label>
+                                </div>
+                            
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="discapacidad" name="derivado" value="Discapacidad">
+                                    <label for="discapacidad">Discapacidad</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="afiliaciones" name="derivado" value="Afiliaciones">
+                                    <label for="afiliaciones">Afiliaciones</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="planes" name="derivado" value="Planes especiales">
+                                    <label for="planes">Planes especiales</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hospitales" name="derivado" value="Hospitales">
+                                    <label for="hospitales">Hospitales</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="eti" name="derivado" value="ETI">
+                                    <label for="eti">Otras entidades (ETI)</label>
+                                </div>
+                               
+                                    <div class="checkbox-item">
+                                    <input type="checkbox" id="preventivos" name="derivado" value="Programas preventivos">
+                                    <label for="preventivos">Programas preventivos</label>
+                                </div>
+                               
+                                      <!-- Desplegable dinámico de Programas preventivos -->
+<div class="form-group" id="tipoPreventivoContainer" style="display:none; margin-top:10px;">
+    <label for="tipoPreventivo">Tipo de programa preventivo:</label>
+    <select id="tipoPreventivo" name="tipoPreventivo">
+        <option value="">Seleccionar tipo</option>
+        <option value="Salud Familiar">Salud Familiar</option>
+        <option value="Salud Sexual y Reproductiva">Salud Sexual y Reproductiva</option>
+        <option value="Pacientes Crónicos">Pacientes Crónicos</option>
+        <option value="Ser Celiaco">Ser Celíaco</option>
+        <option value="Cuidados Paliativos">Cuidados Paliativos</option>
+        <option value="Atención Temprana">Atención Temprana</option>
+    </select>
+</div>
+                        </div>
+                        </div>
+
+                        
+                         <div class="form-group">
+                            <label> Motivo de demanda:</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="herrdigitales" name="motivoDemanda" value="Herramientas digitales (token, portal, app)">
+                                    <label for="herrdigitales"> Herramientas digitales (token, portal, app)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="servimedicos" name="motivoDemanda" value="Servicios médicos y turnos)">
+                                    <label for="servimedicos"> Servicios médicos y turnos </label>
+                                </div>
+                                 <div class="checkbox-item">
+                                    <input type="checkbox" id="laboratorio" name="motivoDemanda" value="Laboratorio)">
+                                    <label for="laboratorio"> Laboratorio </label>
+                                </div>
+                                 <div class="checkbox-item">
+                                    <input type="checkbox" id="medieinsumos" name="motivoDemanda" value="Medicamentos/Insumos)">
+                                    <label for="medieinsumos"> Medicamentos/Insumos </label>
+                                </div>
+                                 <div class="checkbox-item">
+                                    <input type="checkbox" id="afiliaciones" name="motivoDemanda" value="Afiliaciones">
+                                    <label for="afiliaciones"> Afiliaciones </label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="autorizaciones" name="motivoDemanda" value="Autorizaciones">
+                                    <label for="autorizaciones"> Autorizaciones </label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="discapacidads" name="motivoDemanda" value="Discapacidad">
+                                    <label for="discapacidad"> Discapacidad </label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="infogral" name="motivoDemanda" value="Información general">
+                                    <label for="infogral"> Información general </label>
+                                </div>
+                                
+</div>
+
+                        <div class="form-group">
+                            <label> Tiempo de atención presencial:</label>
+                            <select id="tiempoAtencion" name="tiempoAtencion">
+                                <option value="">Seleccionar tiempo</option>
+                                <option value="0-10 min">0-10 min</option>
+                                <option value="11-20 min">11-20 min</option>
+                                <option value="21-30 min">21-30 min</option>
+                                <option value="+ 30 min">+ 30 min</option>
+                                <option value="+ 1 hora">+ 1 hora</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>¿El caso requiere seguimiento no presencial?</label>
+                            <div class="radio-group">
+                                <div class="radio-item">
+                                    <input type="radio" id="seguimientoSi" name="seguimiento" value="Si">
+                                    <label for="seguimientoSi">Sí</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" id="seguimientoNo" name="seguimiento" value="No">
+                                    <label for="seguimientoNo">No</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Estado:</label>
+                            <select id="estado" name="estado" required>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En proceso">En proceso</option>
+                                <option value="Cerrado">Cerrado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>¿Derivado interno?</label>
+                            <div class="radio-group">
+                                <div class="radio-item">
+                                    <input type="radio" id="derivadoSi" name="derivadoInterno" value="Si">
+                                    <label for="derivadoSi">Sí</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" id="derivadoNoInt" name="derivadoInterno" value="No">
+                                    <label for="derivadoNoInt">No</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="operadorDerivado" style="display: none;">
+                            <label> Operador destino:</label>
+                            <select id="operadorDestino" name="operadorDestino">
+                                <option value=""> A Cola de Atención General </option>
+                                <option value="Maria Salas Marin">Maria Salas Marin</option>
+                                <option value="Elisabeth Galvani">Elisabeth Galvani</option>
+                                <option value="Laura Osorio">Laura Osorio</option>
+                                <option value="Paula Aguero">Paula Aguero</option>
+                                <option value="Marcela Mendez">Marcela Mendez</option>
+                                <option value="Cecilia Molina">Cecilia Molina</option>
+                                <option value="Cecilia Silva">Cecilia Silva</option>
+                                <option value="Jimena Del Barrio">Jimena Del Barrio</option>
+                                <option value="Carla Grinberg">Carla Grinberg</option>
+                                <option value="Virginia Cechinni">Virginia Cechinni</option>
+                                <option value="Fabiana Decima">Fabiana Decima</option>
+                                <option value="Fernanda Suarez">Fernanda Suarez</option>
+                                <option value="Paola Yañez">Paola Yañez</option>
+                                <option value="Dina Gregorat">Dina Gregorat</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label> Observaciones:</label>
+                            <textarea 
+                                id="observaciones" 
+                                name="observaciones" 
+                                placeholder="Ingrese observaciones adicionales (máximo 500 caracteres)"
+                                rows="4"
+                                maxlength="500"
+                            ></textarea>
+                            <div class="char-counter">
+                                <span id="contadorCaracteres">0</span>/500 caracteres
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 30px;">
+                            <button type="submit" class="btn">Registrar Caso</button>
+                            <button type="button" class="btn btn-secondary" onclick="limpiarFormulario()">Limpiar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+                <!-- Panel de Estadísticas -->
+                <div class="stats-section">
+                    <h2 class="section-title">Estadísticas en Tiempo Real</h2>
+                    
+                    <div class="status-badges">
+                        <span class="badge badge-pendiente">
+                            <span id="pendienteCount">0</span> Pendientes
+                        </span>
+                        <span class="badge badge-proceso">
+                            <span id="procesoCount">0</span> En Proceso
+                        </span>
+                        <span class="badge badge-cerrado">
+                            <span id="cerradoCount">0</span> Cerrados
+                        </span>
+                    </div>
+                    
+                    <div class="team-performance">
+                        <h3 style="color: #2b012b; margin-bottom: 15px;">Rendimiento del Equipo</h3>
+                        
+                        <div class="operator-stats">
+                            <span>Casos completados hoy:</span>
+                            <strong id="casosCompletadosHoy">0</strong>
+                        </div>
+                        
+                        <div class="operator-stats">
+                            <span>Promedio semanal:</span>
+                            <strong id="promedioSemanal">0</strong>
+                        </div>
+                        
+                        <div>
+                            <label>Progreso diario del equipo:</label>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progresoDiario" style="width: 0%"></div>
+                            </div>
+                            <small><span id="progresoTexto">0/50</span> casos completados</small>
+                        </div>
+                    </div>
+                    
+                                       
+                    <div style="margin-top: 25px;">
+    <h4 style="color: #2b012b; margin-bottom: 15px;"> Motivos de Demanda del Área</h4>
+    
+    <!-- Filtros de período -->
+    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+        <label style="font-weight: 600; color: #2b012b; margin: 0;">Período:</label>
+        
+        <button class="btn-filter" onclick="filtrarMotivosPorPeriodo('hoy')" id="btnHoy">
+            Hoy
+        </button>
+        <button class="btn-filter" onclick="filtrarMotivosPorPeriodo('semana')" id="btnSemana">
+            Esta Semana
+        </button>
+        <button class="btn-filter" onclick="filtrarMotivosPorPeriodo('mes')" id="btnMes">
+            Este Mes
+        </button>
+        <button class="btn-filter" onclick="mostrarRangoFechas()" id="btnRango">
+            Rango Personalizado
+        </button>
+    </div>
+    
+    <!-- Selector de rango de fechas (oculto por defecto) -->
+    <div id="rangoFechasContainer" style="display: none; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <div>
+                <label style="font-size: 0.9rem; font-weight: 600; color: #555; margin-bottom: 5px; display: block;">Desde:</label>
+                <input type="date" id="fechaDesde" style="padding: 8px; border: 2px solid #ddd; border-radius: 5px;">
+            </div>
+            <div>
+                <label style="font-size: 0.9rem; font-weight: 600; color: #555; margin-bottom: 5px; display: block;">Hasta:</label>
+                <input type="date" id="fechaHasta" style="padding: 8px; border: 2px solid #ddd; border-radius: 5px;">
+            </div>
+            <button class="btn" onclick="aplicarRangoFechas()" style="margin-top: 20px;">
+                Aplicar
+            </button>
+        </div>
+    </div>
+    
+    <!-- Información del período seleccionado -->
+    <div id="infoPeriodo" style="margin-bottom: 15px; padding: 10px; background: #e7f3ff; border-left: 4px solid #0066cc; border-radius: 5px;">
+        <small style="color: #004085;"><strong>Mostrando:</strong> <span id="textoPeriodo">Hoy</span></small>
+    </div>
+    
+    <!-- Gráfico de barras -->
+    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <canvas id="motivosDemandaChart" style="max-height: 400px;"></canvas>
+    </div>
+    
+    <!-- Leyenda personalizada -->
+    <div id="motivosDemandaLegend" style="margin-top: 15px;">
+        <!-- Se actualiza dinámicamente -->
+    </div>
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Búsqueda de Historial -->
+        <div id="tab-busqueda" class="tab-content">
+            <div class="search-section">
+                <div class="search-box">
+                    <h2 class="section-title">🔍 Búsqueda de Historial de Atención</h2>
+                    
+                    <div class="form-group">
+                        <label for="searchDNI">DNI del Afiliado:</label>
+                        <input type="number" id="searchDNI" placeholder="Ingrese DNI para buscar historial">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="searchNombre">Nombre del Afiliado (opcional):</label>
+                        <input type="text" id="searchNombre" placeholder="Apellido, Nombre">
+                    </div>
+
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label for="filterEstado">Estado:</label>
+                            <select id="filterEstado">
+                                <option value="">Todos</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En proceso">En proceso</option>
+                                <option value="Cerrado">Cerrado</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterFecha">Desde:</label>
+                            <input type="date" id="filterFecha">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterOperador">Operador:</label>
+                            <select id="filterOperador">
+                                <option value="">Todos</option>
+                                <option value="Maria Salas Marin">Maria Salas Marin</option>
+                                <option value="Elisabeth Galvani">Elisabeth Galvani</option>
+                                <option value="Laura Osorio">Laura Osorio</option>
+                                <option value="Paula Aguero">Paula Aguero</option>
+                                <option value="Marcela Mendez">Marcela Mendez</option>
+                                <option value="Cecilia Molina">Cecilia Molina</option>
+                                <option value="Cecilia Silva">Cecilia Silva</option>
+                                <option value="Jimena Del Barrio">Jimena Del Barrio</option>
+                                <option value="Carla Grinberg">Carla Grinberg</option>
+                                <option value="Virginia Cechinni">Virginia Cechinni</option>
+                                <option value="Fabiana Decima">Fabiana Decima</option>
+                                <option value="Fernanda Suarez">Fernanda Suarez</option>
+                                <option value="Paola Yañez">Paola Yañez</option>
+                                <option value="Dina Gregorat">Dina Gregorat</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <button type="button" class="btn" onclick="buscarHistorial()">🔍 Buscar Historial</button>
+                        <button type="button" class="btn btn-secondary" onclick="limpiarBusqueda()">🧹 Limpiar</button>
+                    </div>
+
+                    <div class="search-results" id="searchResults">
+                        <div class="no-results">
+                            <p>🔍 Ingrese un DNI para buscar el historial de atención del afiliado</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="search-box">
+                    <h2 class="section-title">📊 Resumen de Búsqueda</h2>
+                    
+                    <div id="searchSummary">
+                        <div class="operator-stats">
+                            <span>Total de casos encontrados:</span>
+                            <strong id="totalCasosEncontrados">0</strong>
+                        </div>
+                        <div class="operator-stats">
+                            <span>Casos pendientes:</span>
+                            <strong id="casosPendientesEncontrados">0</strong>
+                        </div>
+                        <div class="operator-stats">
+                            <span>Casos en proceso:</span>
+                            <strong id="casosProcesoEncontrados">0</strong>
+                        </div>
+                        <div class="operator-stats">
+                            <span>Casos cerrados:</span>
+                            <strong id="casosCerradosEncontrados">0</strong>
+                        </div>
+                        <div class="operator-stats">
+                            <span>Última atención:</span>
+                            <strong id="ultimaAtencion">-</strong>
+                        </div>
+                        <div class="operator-stats">
+                            <span>Motivo más frecuente:</span>
+                            <strong id="motivoMasFrecuente">-</strong>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <h4 style="color: #2b012b; margin-bottom: 10px;">Acciones Rápidas</h4>
+                        <button class="btn btn-small" onclick="exportarHistorial()" id="btnExportar" disabled>
+                            📄 Exportar Historial
+                        </button>
+                        <button class="btn btn-small btn-secondary" onclick="crearCasoRapido()" id="btnCasoRapido" disabled>
+                            ➕ Nuevo Caso para este Afiliado
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Casos Pendientes -->
+        <div id="tab-pendientes" class="tab-content">
+            <div class="pending-cases">
+                <h2 class="section-title">📋 Casos No Cerrados - Seguimiento</h2>
+                
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="filterEstadoPendiente">Estado:</label>
+                        <select id="filterEstadoPendiente" onchange="filtrarCasosPendientes()">
+                            <option value="">Todos los no cerrados</option>
+                            <option value="Pendiente">Solo Pendientes</option>
+                            <option value="En proceso">Solo En Proceso</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filterOperadorPendiente">Operador:</label>
+                        <select id="filterOperadorPendiente" onchange="filtrarCasosPendientes()">
+                            <option value="">Todos los operadores</option>
+                            <option value="Maria Salas Marin">Maria Salas Marin</option>
+                            <option value="Elisabeth Galvani">Elisabeth Galvani</option>
+                            <option value="Laura Osorio">Laura Osorio</option>
+                            <option value="Paula Aguero">Paula Aguero</option>
+                            <option value="Marcela Mendez">Marcela Mendez</option>
+                            <option value="Cecilia Molina">Cecilia Molina</option>
+                            <option value="Cecilia Silva">Cecilia Silva</option>
+                            <option value="Jimena Del Barrio">Jimena Del Barrio</option>
+                            <option value="Carla Grinberg">Carla Grinberg</option>
+                            <option value="Virginia Cechinni">Virginia Cechinni</option>
+                            <option value="Fabiana Decima">Fabiana Decima</option>
+                            <option value="Fernanda Suarez">Fernanda Suarez</option>
+                            <option value="Paola Yañez">Paola Yañez</option>
+                            <option value="Dina Gregorat">Dina Gregorat</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="ordenarPor">Ordenar por:</label>
+                        <select id="ordenarPor" onchange="filtrarCasosPendientes()">
+                            <option value="fecha">Fecha (más reciente)</option>
+                            <option value="fechaAsc">Fecha (más antiguo)</option>
+                            <option value="operador">Operador</option>
+                            <option value="estado">Estado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px; text-align: center;">
+                    <button class="btn" onclick="actualizarCasosPendientes()">🔄 Actualizar Lista</button>
+                    <button class="btn btn-secondary" onclick="exportarCasosPendientes()">📊 Exportar Resumen</button>
+                </div>
+
+                <div id="pendingCasesList">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Variables globales para almacenar datos
+        let casos = [];
+        let operadorStats = {};
+        let motivoStats = {};
+        let historialActual = [];
+        let nivelTriageSeleccionado = '';
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async function() {
+    actualizarFechaHora();
+    setInterval(actualizarFechaHora, 1000);
+    seleccionarSLA('verde');
+    
+    // Esperar a que carguen los datos ANTES de actualizar métricas
+    await cargarDatos();
+});
+
+        // Función para mostrar/ocultar tabs
+        function mostrarTab(tabName) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remover clase active de todos los nav-tabs
+            document.querySelectorAll('.nav-tab').forEach(navTab => {
+                navTab.classList.remove('active');
+            });
+            
+            // Mostrar el tab seleccionado
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+
+            // Acciones específicas por tab
+            if (tabName === 'pendientes') {
+                actualizarCasosPendientes();
+            }
+        }
+
+        // Cargar datos del localStorage
+        // Cargar datos desde Google Sheets
+async function cargarDatos() {
+    try {
+        // Mostrar indicador de carga
+        document.getElementById('ultimaActualizacion').textContent = 'Cargando...';
+        
+        const respuesta = await fetch(APPS_SCRIPT_URL);
+        const datos = await respuesta.json();
+        
+        if (Array.isArray(datos)) {
+            casos = datos;
+            // Guardar copia local como respaldo
+            localStorage.setItem('casosPoblacionales', JSON.stringify(casos));
+        } else {
+            // Si falla, usar localStorage como respaldo
+            const datosLocales = localStorage.getItem('casosPoblacionales');
+            if (datosLocales) casos = JSON.parse(datosLocales);
+        }
+    } catch (error) {
+        console.error('Error al cargar desde Sheets:', error);
+        // Fallback a localStorage
+        const datosLocales = localStorage.getItem('casosPoblacionales');
+        if (datosLocales) casos = JSON.parse(datosLocales);
+    }
+    
+    // Actualizar todo después de cargar
+    calcularMetricas();
+    filtrarMotivosPorPeriodo('hoy');
+}
+
+        // Guardar datos en localStorage
+        function guardarDatos() {
+            localStorage.setItem('casosPoblacionales', JSON.stringify(casos));
+        }
+        
+        // Contador de caracteres para observaciones
+        document.getElementById('observaciones').addEventListener('input', function() {
+            const contador = document.getElementById('contadorCaracteres');
+            contador.textContent = this.value.length;
+            
+            // Cambiar color cuando se acerca al límite
+            if (this.value.length > 450) {
+                contador.style.color = '#d73527';
+                contador.style.fontWeight = 'bold';
+            } else if (this.value.length > 400) {
+                contador.style.color = '#f0ad4e';
+                contador.style.fontWeight = 'bold';
+            } else {
+                contador.style.color = '#666';
+                contador.style.fontWeight = 'normal';
+            }
+        });
+       
+        // Variables para el nuevo gráfico de motivos de demanda
+            let motivosDemandaChart = null;
+            let periodoActual = 'hoy';
+            let fechaDesdeGlobal = null;
+            let fechaHastaGlobal = null;
+        // ========================================
+        // FUNCIONES DEL GRÁFICO DE MOTIVOS 3D
+        // ========================================
+
+        // Función para filtrar motivos por período
+        function filtrarMotivosPorPeriodo(periodo) {
+            // Actualizar período actual
+            periodoActual = periodo;
+            
+            // Actualizar botones activos
+            document.querySelectorAll('.btn-filter').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('btn' + periodo.charAt(0).toUpperCase() + periodo.slice(1)).classList.add('active');
+            
+            // Ocultar selector de rango
+            document.getElementById('rangoFechasContainer').style.display = 'none';
+            
+            // Actualizar texto del período
+            let textoPeriodo = '';
+            switch(periodo) {
+                case 'hoy':
+                    textoPeriodo = 'Hoy';
+                    break;
+                case 'semana':
+                    textoPeriodo = 'Esta Semana (últimos 7 días)';
+                    break;
+                case 'mes':
+                    textoPeriodo = 'Este Mes';
+                    break;
+            }
+            document.getElementById('textoPeriodo').textContent = textoPeriodo;
+            
+            // Actualizar gráfico
+            actualizarGraficoMotivosDemanda();
+        }
+
+        // Función para aplicar rango de fechas
+        function aplicarRangoFechas() {
+            const fechaDesde = document.getElementById('fechaDesde').value;
+            const fechaHasta = document.getElementById('fechaHasta').value;
+            
+            if (!fechaDesde || !fechaHasta) {
+                alert('Por favor seleccione ambas fechas');
+                return;
+            }
+            
+            if (new Date(fechaDesde) > new Date(fechaHasta)) {
+                alert('La fecha "Desde" no puede ser mayor que la fecha "Hasta"');
+                return;
+            }
+            
+            // Guardar fechas globalmente
+            fechaDesdeGlobal = fechaDesde;
+            fechaHastaGlobal = fechaHasta;
+            periodoActual = 'rango';
+            
+            // Actualizar texto del período
+            const desde = new Date(fechaDesde).toLocaleDateString('es-ES');
+            const hasta = new Date(fechaHasta).toLocaleDateString('es-ES');
+            document.getElementById('textoPeriodo').textContent = `${desde} - ${hasta}`;
+            
+            // Actualizar gráfico
+            actualizarGraficoMotivosDemanda();
+        }
+
+
+        // Función para mostrar selector de rango
+        function mostrarRangoFechas() {
+            // Actualizar botones activos
+            document.querySelectorAll('.btn-filter').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('btnRango').classList.add('active');
+            
+            // Mostrar selector de rango
+            document.getElementById('rangoFechasContainer').style.display = 'block';
+            
+            // Pre-cargar fechas de hoy si están vacías
+            if (!document.getElementById('fechaDesde').value) {
+                const hoy = new Date().toISOString().split('T')[0];
+                document.getElementById('fechaDesde').value = hoy;
+                document.getElementById('fechaHasta').value = hoy;
+            }
+        }
+
+        // Función principal: actualizar gráfico con barras 3D
+        function actualizarGraficoMotivosDemanda() {
+            // 1. FILTRAR CASOS SEGÚN PERÍODO
+            let casosFiltrados = casos;
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            
+            switch(periodoActual) {
+                case 'hoy':
+                    casosFiltrados = casos.filter(caso => {
+                        const fechaCaso = new Date(caso.fecha);
+                        fechaCaso.setHours(0, 0, 0, 0);
+                        return fechaCaso.getTime() === hoy.getTime();
+                    });
+                    break;
+                    
+                case 'semana':
+                    const hace7dias = new Date();
+                    hace7dias.setDate(hace7dias.getDate() - 7);
+                    hace7dias.setHours(0, 0, 0, 0);
+                    casosFiltrados = casos.filter(caso => {
+                        const fechaCaso = new Date(caso.fecha);
+                        return fechaCaso >= hace7dias;
+                    });
+                    break;
+                    
+                case 'mes':
+                    const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+                    casosFiltrados = casos.filter(caso => {
+                        const fechaCaso = new Date(caso.fecha);
+                        return fechaCaso >= primerDiaMes;
+                    });
+                    break;
+                    
+                case 'rango':
+                    const desde = new Date(fechaDesdeGlobal);
+                    desde.setHours(0, 0, 0, 0);
+                    const hasta = new Date(fechaHastaGlobal);
+                    hasta.setHours(23, 59, 59, 999);
+                    casosFiltrados = casos.filter(caso => {
+                        const fechaCaso = new Date(caso.fecha);
+                        return fechaCaso >= desde && fechaCaso <= hasta;
+                    });
+                    break;
+            }
+            
+            // 2. CONTAR MOTIVOS DE DEMANDA (NO DERIVACIÓN)
+            const motivosDemanda = {};
+            casosFiltrados.forEach(caso => {
+                if (caso.motivoDemanda && caso.motivoDemanda !== '') {
+                    if (!motivosDemanda[caso.motivoDemanda]) {
+                        motivosDemanda[caso.motivoDemanda] = 0;
+                    }
+                    motivosDemanda[caso.motivoDemanda]++;
+                }
+            });
+            
+            // 3. ORDENAR MOTIVOS POR FRECUENCIA Y FILTRAR SOLO LOS QUE TIENEN INCIDENCIAS
+            const motivosOrdenados = Object.entries(motivosDemanda)
+                .filter(([, cantidad]) => cantidad > 0)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 10);
+            
+            // 4. DESTRUIR GRÁFICO ANTERIOR SI EXISTE
+            const ctx = document.getElementById('motivosDemandaChart');
+            if (motivosDemandaChart) {
+                motivosDemandaChart.destroy();
+            }
+            
+            // 5. CREAR NUEVO GRÁFICO CON BARRAS 3D
+            if (motivosOrdenados.length > 0) {
+                const coloresVibrantes = [
+                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+                    '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B195', '#C89EC4',
+                    '#77DD77', '#FFB347', '#DDA0DD', '#87CEEB', '#F0E68C'
+                ];
+                
+                const coloresPorBarra = motivosOrdenados.map((_, index) => coloresVibrantes[index % coloresVibrantes.length]);
+                
+                motivosDemandaChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: motivosOrdenados.map(([motivo]) => motivo),
+                        datasets: [{
+                            label: 'Cantidad de casos',
+                            data: motivosOrdenados.map(([, cantidad]) => cantidad),
+                            backgroundColor: coloresPorBarra.map(color => color + 'DD'),
+                            borderColor: coloresPorBarra,
+                            borderWidth: 3,
+                            borderRadius: 8,
+                            shadowOffsetX: 4,
+                            shadowOffsetY: 4,
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(0, 0, 0, 0.3)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        layout: {
+                            padding: {
+                                top: 40,
+                                bottom: 10
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleFont: { size: 14, weight: 'bold' },
+                                bodyFont: { size: 13 },
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = casosFiltrados.length;
+                                        const porcentaje = ((context.parsed.y / total) * 100).toFixed(1);
+                                        return `Casos: ${context.parsed.y} (${porcentaje}%)`;
+                                    }
+                                }
+                            },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: function(value) {
+                                    return value;
+                                },
+                                font: {
+                                    weight: 'bold',
+                                    size: 14
+                                },
+                                color: function(context) {
+                                    return coloresPorBarra[context.dataIndex];
+                                },
+                                backgroundColor: 'white',
+                                borderRadius: 4,
+                                padding: {
+                                    top: 4,
+                                    bottom: 4,
+                                    left: 8,
+                                    right: 8
+                                },
+                                borderWidth: 2,
+                                borderColor: function(context) {
+                                    return coloresPorBarra[context.dataIndex];
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                display: false,
+                                beginAtZero: true
+                            },
+                            x: {
+                                ticks: {
+                                    font: { 
+                                        size: 12,
+                                        weight: 'bold'
+                                    },
+                                    color: '#2b012b',
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels]
+                });
+                
+                // 6. CREAR LEYENDA PERSONALIZADA
+                let legendHTML = '';
+                motivosOrdenados.forEach(([motivo, cantidad], index) => {
+                    const porcentaje = ((cantidad / casosFiltrados.length) * 100).toFixed(1);
+                    legendHTML += `
+                        <div class="legend-item">
+                            <div style="display: flex; align-items: center;">
+                                <div class="legend-color" style="background-color: ${coloresPorBarra[index]};"></div>
+                                <span class="legend-text">${motivo}</span>
+                            </div>
+                            <span class="legend-value">${cantidad} casos (${porcentaje}%)</span>
+                        </div>
+                    `;
+                });
+                document.getElementById('motivosDemandaLegend').innerHTML = legendHTML;
+                
+            } else {
+                ctx.parentElement.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <p style="font-size: 1.2rem; margin-bottom: 10px;">📭</p>
+                        <p>No hay casos registrados en el período seleccionado</p>
+                    </div>
+                `;
+                document.getElementById('motivosDemandaLegend').innerHTML = '';
+            }
+        }
+       // ============================================
+// AUTENTICACIÓN CON GOOGLE
+// ============================================
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxinB1WpFrwDtPuX4Kd8IDRvMGLS9_ZTJkHdEIKKZh4L6kuk8ocGdNGd0da6ZkFUSY/exec';
+const CLIENT_ID = '364574222220-7mhiu32flta25882kdiutc1dtlkj5mph.apps.googleusercontent.com';
+
+const EMAILS_AUTORIZADOS = [
+  'veronica.mlinarevic@gmail.com',
+  'verushannys.ventus@gmail.com'
+  // Agregá aquí todos los emails del equipo
+];
+
+let emailUsuarioActual = null;
+let nombreUsuarioActual = null;
+
+window.onload = function() {
+  google.accounts.id.initialize({
+    client_id: CLIENT_ID,
+    callback: manejarCredencial,
+    auto_select: true,
+    cancel_on_tap_outside: false
+  });
+
+  google.accounts.id.renderButton(
+    document.getElementById('botonGoogle'),
+    { theme: 'outline', size: 'large', text: 'signin_with', locale: 'es' }
+  );
+
+  google.accounts.id.prompt();
+};
+
+function manejarCredencial(response) {
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  const email = payload.email;
+  const nombre = payload.name;
+
+  if (EMAILS_AUTORIZADOS.includes(email)) {
+    emailUsuarioActual = email;
+    nombreUsuarioActual = nombre;
+    document.getElementById('panelLogin').style.display = 'none';
+    console.log('✅ Acceso concedido:', email);
+  } else {
+    document.getElementById('mensajeLoginError').style.display = 'block';
+    console.warn('❌ Email no autorizado:', email);
+  }
+}
+
+async function enviarASheets(caso) {
+  try {
+    const respuesta = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' }, // Apps Script requiere esto
+      body: JSON.stringify(caso)
+    });
+    const resultado = await respuesta.json();
+    if (resultado.resultado === 'ok') {
+      console.log('✅ Caso enviado a Google Sheets');
+    } else {
+      console.error('⚠️ Error al enviar a Sheets:', resultado.detalle);
+    }
+  } catch (error) {
+    console.error('❌ No se pudo conectar con Sheets:', error);
+    // El dato igual queda en localStorage, no se pierde
+  }
+}
+        // Actualizar fecha y hora actual
+        function actualizarFechaHora() {
+            const now = new Date();
+            const opciones = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            const elemento = document.getElementById('fechaHora');
+            if (elemento) {
+                elemento.textContent = 'Fecha y Hora: ' + now.toLocaleDateString('es-ES', opciones);
+            }
+        }
+        
+        // Mostrar/ocultar campo de operador destino
+        document.querySelectorAll('input[name="derivadoInterno"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const operadorDerivado = document.getElementById('operadorDerivado');
+                operadorDerivado.style.display = this.value === 'Si' ? 'block' : 'none';
+            });
+        });
+        function calcularFechaVencimiento(nivel) {
+        const diasMap = { verde: 15, amarillo: 10, rojo: 2 };
+        const dias = diasMap[nivel] || 15;
+        let fecha = new Date();
+        let diasHabilesContados = 0;
+         while (diasHabilesContados < dias) {
+        fecha.setDate(fecha.getDate() + 1);
+        const diaSemana = fecha.getDay();
+        if (diaSemana !== 0 && diaSemana !== 6) { // excluye sábado y domingo
+            diasHabilesContados++;
+        }
+    }
+    return fecha.toISOString();
+}
+
+        // Envío del formulario
+        document.getElementById('gestionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+              const nivelTriage = document.getElementById('nivelTriageInput').value;
+               if (!nivelTriage) {
+              alert('⚠️ Debe seleccionar el nivel de urgencia (Triage) antes de registrar el caso.');
+              return;
+    }
+            
+            // Recopilar datos del formulario
+            const formData = new FormData(this);
+            const caso = {
+                id: Date.now(), // ID único basado en timestamp
+                fecha: new Date().toISOString(),
+                dni: formData.get('dni'),
+                nroAfi: formData.get('nroAfi'),
+                nombreApellido: formData.get('nombreApellido'),
+                edad: formData.get('edad'),
+                operador: formData.get('operador'),
+                modalidad: formData.get('modalidad'),
+                quienTramita: formData.get('quienTramita'),
+                derivado: formData.getAll('derivado'),
+                motivoDemanda: formData.get('motivoDemanda'),
+                tiempoAtencion: formData.get('tiempoAtencion'),
+                seguimiento: formData.get('seguimiento'),
+                estado: formData.get('estado'),
+                derivadoInterno: formData.get('derivadoInterno'),
+                operadorDestino: formData.get('operadorDestino'),
+                observaciones: formData.get('observaciones'),
+                nivelTriage: nivelTriage,
+                fechaVencimientoSLA: calcularFechaVencimiento(nivelTriage)
+            };
+            
+            // Agregar emailOperador al objeto caso
+caso.emailOperador = emailUsuarioActual || 'no-autenticado';
+
+// Seguir guardando en localStorage (para funcionamiento offline)
+casos.push(caso);
+guardarDatos();
+
+// NUEVO: Enviar también a Google Sheets
+enviarASheets(caso);
+
+
+            
+            // Actualizar métricas
+            calcularMetricas();
+            
+            // Mostrar mensaje de éxito
+            alert('✅ Caso registrado exitosamente');
+            
+            // Limpiar formulario
+            limpiarFormulario();
+
+        });
+        
+        // Función para calcular métricas - VERSIÓN CON ESTADÍSTICAS Y GRÁFICO
+        function calcularMetricas() {
+            actualizarEstadisticasEnTiempoReal();
+        }
+
+        // Variable global para el gráfico
+        let motivosChart = null;
+
+        // Nueva función: Estadísticas en Tiempo Real
+        function actualizarEstadisticasEnTiempoReal() {
+            // Filtrar casos no cerrados
+            const casosNoCerrados = casos.filter(caso => caso.estado !== 'Cerrado');
+            
+            // 1. CONTADORES BÁSICOS
+            const totalPendientes = casosNoCerrados.filter(caso => caso.estado === 'Pendiente').length;
+            const totalEnProceso = casosNoCerrados.filter(caso => caso.estado === 'En proceso').length;
+            const totalDerivados = casosNoCerrados.filter(caso => 
+                caso.derivadoInterno === 'Si' && caso.operadorDestino
+            ).length;
+            const totalColaGeneral = casosNoCerrados.filter(caso => 
+                caso.operadorDestino === 'A cola General'
+            ).length;
+
+            // 2. CALCULAR PROMEDIO DE DÍAS PENDIENTE
+            let sumaDias = 0;
+            casosNoCerrados.forEach(caso => {
+                const fechaCaso = new Date(caso.fecha);
+                const diasTranscurridos = Math.floor((new Date() - fechaCaso) / (1000 * 60 * 60 * 24));
+                sumaDias += diasTranscurridos;
+            });
+            const promedioDias = casosNoCerrados.length > 0 
+                ? Math.round(sumaDias / casosNoCerrados.length) 
+                : 0;
+
+            // 3. ACTUALIZAR CONTADORES EN EL DOM
+            document.getElementById('totalPendientes').textContent = totalPendientes;
+            document.getElementById('totalEnProceso').textContent = totalEnProceso;
+            document.getElementById('totalDerivados').textContent = totalDerivados;
+            document.getElementById('totalColaGeneral').textContent = totalColaGeneral;
+            document.getElementById('promedioDias').textContent = promedioDias;
+
+            // Actualizar hora de última actualización
+            const ahora = new Date();
+            document.getElementById('ultimaActualizacion').textContent = 
+                ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+            // 4. ANÁLISIS DE MOTIVOS DE DERIVACIÓN
+            const motivosDerivacion = {};
+            
+            // Contar todos los motivos de todos los casos (no solo pendientes)
+            casos.forEach(caso => {
+                if (caso.motivoDemanda && caso.motivoDemanda !== '') {
+                    if (!motivosDerivacion[caso.motivoDemanda]) {
+                        motivosDerivacion[caso.motivoDemanda] = 0;
+                    }
+                    motivosDerivacion[caso.motivoDemanda]++;
+                }
+            });
+    
+
+            // Ordenar motivos por frecuencia
+            const motivosOrdenados = Object.entries(motivosDerivacion)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 8); // Top 8 motivos
+
+            // 5. CREAR/ACTUALIZAR GRÁFICO
+            const ctx = document.getElementById('motivosChart');
+            
+            if (motivosChart) {
+                motivosChart.destroy(); // Destruir gráfico anterior si existe
+            }
+
+            if (motivosOrdenados.length > 0) {
+                const colores = [
+                    '#2b012b', '#a020f0', '#9b59b6', '#8e44ad',
+                    '#d946ef', '#c026d3', '#a855f7', '#9333ea'
+                ];
+
+                motivosChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: motivosOrdenados.map(([motivo]) => motivo),
+                        datasets: [{
+                            label: 'Cantidad de casos',
+                            data: motivosOrdenados.map(([, cantidad]) => cantidad),
+                            backgroundColor: colores,
+                            borderColor: colores.map(color => color),
+                            borderWidth: 2,
+                            borderRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Casos: ' + context.parsed.y;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: '#f0f0f0'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    font: {
+                                        size: 11
+                                    },
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // 6. CREAR LEYENDA PERSONALIZADA
+                let legendHTML = '';
+                motivosOrdenados.forEach(([motivo, cantidad], index) => {
+                    const porcentaje = ((cantidad / casos.length) * 100).toFixed(1);
+                    legendHTML += `
+                        <div class="legend-item">
+                            <div style="display: flex; align-items: center;">
+                                <div class="legend-color" style="background-color: ${colores[index]};"></div>
+                                <span class="legend-text">${motivo}</span>
+                            </div>
+                            <span class="legend-value">${cantidad} (${porcentaje}%)</span>
+                        </div>
+                    `;
+                });
+                document.getElementById('motivosLegend').innerHTML = legendHTML;
+            } else {
+                // Si no hay datos, mostrar mensaje
+                document.getElementById('motivosLegend').innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #666;">
+                        <p>📊 No hay datos de motivos de derivación disponibles</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Limpiar formulario
+        function limpiarFormulario() {
+            document.getElementById('gestionForm').reset();
+            document.getElementById('contadorCaracteres').textContent = '0';
+            document.getElementById('operadorDerivado').style.display = 'none';        
+       
+         // Resetear triage a verde por defecto
+        seleccionarSLA('verde');
+        }
+      
+        // FUNCIONES DE BÚSQUEDA DE HISTORIAL
+
+        function buscarHistorial() {
+            const dni = document.getElementById('searchDNI').value.trim();
+            const nombre = document.getElementById('searchNombre').value.trim();
+            const estado = document.getElementById('filterEstado').value;
+            const H = document.getElementById('filterFecha').value;
+            const operador = document.getElementById('filterOperador').value;
+
+            if (!dni && !nombre) {
+                alert('⚠️ Debe ingresar al menos el DNI o el nombre para realizar la búsqueda');
+                return;
+            }
+
+            // Filtrar casos
+            let resultados = casos.filter(caso => {
+                let cumple = true;
+                
+                if (dni && caso.dni !== dni)  cumple = false;
+                if (nroAfi && caso.nroAfi !== nroAfi)  cumple = false;
+                if (nombre && !caso.nombreApellido.toLowerCase().includes(nombre.toLowerCase())) cumple = false;
+                if (estado && caso.estado !== estado) cumple = false;
+                if (operador && caso.operador !== operador) cumple = false;
+                if (fecha && new Date(caso.fecha).toDateString() < new Date(fecha).toDateString()) cumple = false;
+                
+                return cumple;
+            });
+
+            // Ordenar por fecha (más reciente primero)
+            resultados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+            historialActual = resultados;
+            mostrarResultadosBusqueda(resultados);
+            actualizarResumenBusqueda(resultados);
+        }
+
+        function mostrarResultadosBusqueda(resultados) {
+            const container = document.getElementById('searchResults');
+            
+            if (resultados.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <p>❌ No se encontraron casos que coincidan con los criterios de búsqueda</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = resultados.map(caso => {
+                const fecha = new Date(caso.fecha);
+                const fechaFormateada = fecha.toLocaleDateString('es-ES') + ' ' + fecha.toLocaleTimeString('es-ES');
+                
+                return `
+                    <div class="case-card">
+                        <div class="case-header">
+                            <span class="case-date">${fechaFormateada}</span>
+                            <span class="badge ${getBadgeClass(caso.estado)}">${caso.estado}</span>
+                        </div>
+                        <div class="case-details">
+                            <p><strong>Operador:</strong> ${caso.operador}</p>
+                            <p><strong>Motivo:</strong> ${caso.motivoDemanda}</p>
+                            <p><strong>Modalidad:</strong> ${caso.modalidad} | <strong>Tramita:</strong> ${caso.quienTramita}</p>
+                            ${caso.tiempoAtencion ? `<p><strong>Tiempo:</strong> ${caso.tiempoAtencion}</p>` : ''}
+                            ${caso.derivado && caso.derivado.length > 0 ? `<p><strong>Derivado a:</strong> ${caso.derivado.join(', ')}</p>` : ''}
+                            ${caso.observaciones ? `<p><strong>Observaciones:</strong> ${caso.observaciones}</p>` : ''}
+                        </div>
+                        <div class="case-actions">
+                            <button class="btn btn-small" onclick="editarCaso(${caso.id})">✏️ Editar</button>
+                            <button class="btn btn-small btn-secondary" onclick="duplicarCaso(${caso.id})">📋 Duplicar</button>
+                            ${caso.estado !== 'Cerrado' ? `<button class="btn btn-small" onclick="cerrarCaso(${caso.id})">✅ Cerrar</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        function getBadgeClass(estado) {
+            switch(estado) {
+                case 'Pendiente': return 'badge-pendiente';
+                case 'En proceso': return 'badge-proceso';
+                case 'Cerrado': return 'badge-cerrado';
+                default: return 'badge-pendiente';
+            }
+        }
+
+        function actualizarResumenBusqueda(resultados) {
+            const total = resultados.length;
+            const pendientes = resultados.filter(caso => caso.estado === 'Pendiente').length;
+            const proceso = resultados.filter(caso => caso.estado === 'En proceso').length;
+            const cerrados = resultados.filter(caso => caso.estado === 'Cerrado').length;
+
+            document.getElementById('totalCasosEncontrados').textContent = total;
+            document.getElementById('casosPendientesEncontrados').textContent = pendientes;
+            document.getElementById('casosProcesoEncontrados').textContent = proceso;
+            document.getElementById('casosCerradosEncontrados').textContent = cerrados;
+
+            // Última atención
+            if (resultados.length > 0) {
+                const ultimaFecha = new Date(resultados[0].fecha);
+                document.getElementById('ultimaAtencion').textContent = ultimaFecha.toLocaleDateString('es-ES');
+                
+                // Motivo más frecuente
+                const motivos = {};
+                resultados.forEach(caso => {
+                    if (caso.motivoDemanda) {
+                        motivos[caso.motivoDemanda] = (motivos[caso.motivoDemanda] || 0) + 1;
+                    }
+                });
+                
+                const motivoMasFrecuente = Object.entries(motivos)
+                    .sort(([,a], [,b]) => b - a)[0];
+                
+                document.getElementById('motivoMasFrecuente').textContent = 
+                    motivoMasFrecuente ? `${motivoMasFrecuente[0]} (${motivoMasFrecuente[1]})` : '-';
+            } else {
+                document.getElementById('ultimaAtencion').textContent = '-';
+                document.getElementById('motivoMasFrecuente').textContent = '-';
+            }
+
+            // Habilitar/deshabilitar botones
+            const btnExportar = document.getElementById('btnExportar');
+            const btnCasoRapido = document.getElementById('btnCasoRapido');
+            
+            btnExportar.disabled = total === 0;
+            btnCasoRapido.disabled = total === 0;
+        }
+
+        function limpiarBusqueda() {
+            document.getElementById('searchDNI').value = '';
+            document.getElementById('searchNombre').value = '';
+            document.getElementById('filterEstado').value = '';
+            document.getElementById('filterFecha').value = '';
+            document.getElementById('filterOperador').value = '';
+            
+            document.getElementById('searchResults').innerHTML = `
+                <div class="no-results">
+                    <p>🔍 Ingrese un DNI para buscar el historial de atención del afiliado</p>
+                </div>
+            `;
+
+            // Resetear resumen
+            document.getElementById('totalCasosEncontrados').textContent = '0';
+            document.getElementById('casosPendientesEncontrados').textContent = '0';
+            document.getElementById('casosProcesoEncontrados').textContent = '0';
+            document.getElementById('casosCerradosEncontrados').textContent = '0';
+            document.getElementById('ultimaAtencion').textContent = '-';
+            document.getElementById('motivoMasFrecuente').textContent = '-';
+
+            document.getElementById('btnExportar').disabled = true;
+            document.getElementById('btnCasoRapido').disabled = true;
+
+            historialActual = [];
+        }
+
+        // FUNCIONES DE CASOS PENDIENTES
+
+        function actualizarCasosPendientes() {
+            filtrarCasosPendientes();
+        }
+
+        function filtrarCasosPendientes() {
+            const estadoFiltro = document.getElementById('filterEstadoPendiente').value;
+            const operadorFiltro = document.getElementById('filterOperadorPendiente').value;
+            const orden = document.getElementById('ordenarPor').value;
+
+            // Filtrar casos no cerrados
+            let casosPendientes = casos.filter(caso => caso.estado !== 'Cerrado');
+
+            // Aplicar filtros adicionales
+            if (estadoFiltro) {
+                casosPendientes = casosPendientes.filter(caso => caso.estado === estadoFiltro);
+            }
+
+            if (operadorFiltro) {
+                casosPendientes = casosPendientes.filter(caso => caso.operador === operadorFiltro);
+            }
+
+            // Aplicar ordenamiento
+            switch(orden) {
+                case 'fecha':
+                    casosPendientes.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+                    break;
+                case 'fechaAsc':
+                    casosPendientes.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+                    break;
+                case 'operador':
+                    casosPendientes.sort((a, b) => a.operador.localeCompare(b.operador));
+                    break;
+                case 'estado':
+                    casosPendientes.sort((a, b) => a.estado.localeCompare(b.estado));
+                    break;
+            }
+
+            mostrarCasosPendientes(casosPendientes);
+        }
+
+        function mostrarCasosPendientes(casosPendientes) {
+            const container = document.getElementById('pendingCasesList');
+
+            if (casosPendientes.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <p>🎉 ¡Excelente! No hay casos pendientes que coincidan con los filtros</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = casosPendientes.map(caso => {
+                const fecha = new Date(caso.fecha);
+                const fechaFormateada = fecha.toLocaleDateString('es-ES') + ' ' + fecha.toLocaleTimeString('es-ES');
+                const diasTranscurridos = Math.floor((new Date() - fecha) / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <div class="pending-case ${caso.estado === 'En proceso' ? 'proceso' : ''}">
+                        <div class="case-header">
+                            <span class="case-date">${fechaFormateada} (hace ${diasTranscurridos} días)</span>
+                            <span class="badge ${getBadgeClass(caso.estado)}">${caso.estado}</span>
+                        </div>
+                        <div class="case-info">
+                            <strong>Afiliado:</strong> ${caso.nombreApellido} |  <strong>DNI:</strong> ${caso.dni}  |  <strong>Nro de Afiliado:</strong> ${caso.nroAfi}
+                        </div>
+                        <div class="case-info">
+                            <strong>Operador:</strong> ${caso.operador} | <strong>Motivo:</strong> ${caso.motivoDemanda}
+                        </div>
+                        ${caso.observaciones ? `<div class="case-info"><strong>Observaciones:</strong> ${caso.observaciones}</div>` : ''}
+                        ${caso.seguimiento === 'Si' ? `<div class="case-info" style="color: #d73527;"><strong>⚠️ Requiere seguimiento no presencial</strong></div>` : ''}
+                        
+                        <div class="case-actions">
+                            <button class="btn btn-small" onclick="cambiarEstadoCaso(${caso.id}, 'En proceso')">
+                                🔄 Marcar En Proceso
+                            </button>
+                            <button class="btn btn-small" onclick="cambiarEstadoCaso(${caso.id}, 'Cerrado')">
+                                ✅ Cerrar Caso
+                            </button>
+                                                        <button class="btn btn-small" onclick="cambiarEstadoCaso(${caso.id}, 'Cerrado')">
+                                ✅ Cerrar Caso
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+// Mostrar/ocultar campos del referente según selección
+document.querySelectorAll('input[name="quienTramita"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const bloqueReferente = document.getElementById('datosReferente');
+        bloqueReferente.style.display = (this.value === 'Referente') ? 'grid' : 'none';
+    });
+});
+
+
+/**
+ * FUNCIÓN PRINCIPAL: Seleccionar nivel de triage compacto
+ * Se ejecuta al hacer clic en cualquier círculo de color
+ */
+function seleccionarSLA(nivel) {
+    // 1. Actualizar variable global
+    nivelTriageSeleccionado = nivel;
+
+    // 2. Actualizar botones visualmente
+    const ids = { verde: 'sla-verde', amarillo: 'sla-amarillo', rojo: 'sla-rojo' };
+    Object.entries(ids).forEach(([key, id]) => {
+        const btn = document.getElementById(id);
+        if (key === nivel) {
+            btn.classList.remove('inactive');
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+            btn.classList.add('inactive');
+        }
+    });
+
+    // 3. Sincronizar con el campo oculto
+    const inputTriage = document.getElementById('nivelTriageInput');
+    if (inputTriage) inputTriage.value = nivel;
+}
+
+
+
+
+// NOTA: Para integrar el triage con la función guardarCaso() existente,
+// agregar esta validación al inicio de la función:
+/*
+function guardarCaso() {
+    // Validar triage PRIMERO
+    const datosTriage = obtenerDatosTriage();
+    if (!datosTriage.valido) {
+        alert(datosTriage.mensaje);
+        return;
+    }
+    
+    // ... resto del código de guardarCaso()
+    
+    // Al final, después de guardar exitosamente:
+    resetearTriage();
+}
+*/
+// Mostrar select de tipo preventivo solo si se marca "Programas preventivos"
+document.getElementById('preventivos').addEventListener('change', function() {
+    const contenedor = document.getElementById('tipoPreventivoContainer');
+    contenedor.style.display = this.checked ? 'block' : 'none';
+});
+
+// ============================================
+    </script>
+</body>
+</html>
